@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Self-test audiometry</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #eef1f4; --panel: #ffffff; --ink: #1b2430; --muted: #566274; --line: #cfd6de;
+    --left: #1f5fbf; --right: #c0392b;
+    --warn-bg: #fff4d6; --warn-line: #d9a400;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12171d; --panel: #1b222b; --ink: #e8edf2; --muted: #9aa7b6; --line: #333d4a;
+      --left: #6aa5ff; --right: #ff7b6b; --warn-bg: #3a3112; --warn-line: #d9a400;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #12171d; --panel: #1b222b; --ink: #e8edf2; --muted: #9aa7b6; --line: #333d4a;
+    --left: #6aa5ff; --right: #ff7b6b; --warn-bg: #3a3112; --warn-line: #d9a400;
+  }
+
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 17px/1.5 "Atkinson Hyperlegible", system-ui, sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 1.6rem; margin: 0 0 12px; }
+  h2 { font-size: 1.1rem; margin: 0 0 8px; }
+  .warning { background: var(--warn-bg); border-left: 6px solid var(--warn-line);
+             padding: 12px 14px; border-radius: 4px; margin-bottom: 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+           padding: 16px; margin-bottom: 16px; }
+  ol, ul { margin: 0; padding-left: 22px; } li { margin-bottom: 4px; }
+
+  /* The active ear sets the accent colour (blue = left, red = right, as on an audiogram) */
+  .tester { --accent: var(--left); border-top: 6px solid var(--accent); }
+  .tester[data-ear="right"] { --accent: var(--right); }
+  label.field { display: block; font-weight: 700; margin: 0 0 6px; }
+  select, button { font: inherit; color: inherit; }
+  select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 6px;
+           background: var(--bg); }
+  .ears { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .ears input { position: absolute; opacity: 0; }
+  .ears label { text-align: center; padding: 12px; border: 2px solid var(--line);
+                border-radius: 6px; cursor: pointer; font-weight: 700; }
+  .ears input:checked + label { border-color: var(--accent); background: var(--accent); color: #fff; }
+  .ears input:focus-visible + label, button:focus-visible, select:focus-visible
+      { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .level { display: grid; grid-template-columns: 64px 1fr 64px; gap: 8px; align-items: center;
+           margin: 16px 0; text-align: center; }
+  .level button { height: 64px; font-size: 1.8rem; border: 2px solid var(--line);
+                  border-radius: 8px; background: var(--bg); cursor: pointer; }
+  .level button:active { border-color: var(--accent); }
+  #db { font-size: 2.6rem; font-weight: 700; line-height: 1.1; }
+  #gain { color: var(--muted); font-size: 0.85rem; }
+  #play { width: 100%; padding: 16px; font-size: 1.2rem; font-weight: 700; border: 0;
+          border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+  kbd { font: 700 0.7rem/1 inherit; font-family: inherit; padding: 2px 6px; border-radius: 4px;
+        border: 1px solid currentColor; opacity: 0.75; white-space: nowrap; }
+  .level button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .level button kbd { font-size: 0.7rem; }
+  .ears label kbd, #play kbd { margin-left: 8px; }
+  label.field kbd { margin-left: 6px; font-weight: 400; }
+  #play:disabled { opacity: 0.6; cursor: default; }
+</style>
+
+</head>
+
+<body>
+<main>
+  <h1>Self-test audiometry</h1>
+
+  <div class="warning" role="alert">
+    <strong>&#9888; Not a medical test.</strong> This tool is not a replacement for clinical audiometry.
+    It is uncalibrated, so the numbers are not true hearing levels (dB HL) and cannot diagnose
+    or rule out hearing loss. If you are worried about your hearing, see an audiologist or doctor.
+    Raise the level in small steps and stop if any sound is uncomfortably loud.
+  </div>
+
+  <section class="panel">
+    <h2>Before you start</h2>
+    <ol>
+      <li>Use wired, closed (over-ear) headphones plugged into the 3.5&nbsp;mm jack. Avoid Bluetooth.</li>
+      <li>Set the system volume to maximum and turn off any sound enhancements or equalizer.</li>
+      <li>Sit in a quiet room. Check which side of the headphones is left and which is right.</li>
+      <li>Start with the level too quiet to hear, then press <em>Play pulse</em> and raise it 2.5&nbsp;dB at a time.</li>
+      <li>Your threshold is the quietest level where you can hear the tone.</li>
+    </ol>
+  </section>
+
+  <section class="panel tester" id="tester" data-ear="left">
+    <div class="ears" role="radiogroup" aria-label="Ear">
+      <div><input type="radio" name="ear" id="earL" value="left" checked><label for="earL">Left ear<kbd>L</kbd></label></div>
+      <div><input type="radio" name="ear" id="earR" value="right"><label for="earR">Right ear<kbd>R</kbd></label></div>
+    </div>
+
+    <label class="field" for="freq">Frequency <kbd>←</kbd><kbd>→</kbd></label>
+    <select id="freq">
+      <option value="250">250 Hz</option>
+      <option value="500">500 Hz</option>
+      <option value="1000" selected>1000 Hz</option>
+      <option value="2000">2000 Hz</option>
+      <!--<option value="3000">3000 Hz</option> -->
+      <option value="4000">4000 Hz</option>
+      <!--<option value="6000">6000 Hz</option> -->
+      <option value="8000">8000 Hz</option>
+    </select>
+
+    <div class="level">
+      <button id="down" aria-label="Decrease level by 2.5 dB" aria-keyshortcuts="ArrowDown"><span>&minus;</span><kbd>↓</kbd></button>
+      <div><div id="db" aria-live="polite">-80 dB</div><div id="gain"></div></div>
+      <button id="up" aria-label="Increase level by 2.5 dB" aria-keyshortcuts="ArrowUp"><span>+</span><kbd>↑</kbd></button>
+    </div>
+
+    <button id="play" aria-keyshortcuts="Space"><span id="playLabel">Play pulse</span><kbd>Space</kbd></button>
+  </section>
+</main>
+
+<script>
+/* ===================================================================
+   DECIBEL CALCULATION
+   -------------------------------------------------------------------
+   The level shown on screen is in dBFS: decibels relative to "full
+   scale", i.e. the loudest signal the computer can output.
+
+       0 dB   = full scale (amplitude 1.0)  -> loudest possible
+     -20 dB   = 1/10 of the amplitude
+     -40 dB   = 1/100 of the amplitude
+     -80 dB   = 1/10000 of the amplitude
+
+   Every -20 dB divides the amplitude by 10, and every -6 dB roughly
+   halves it. The formula is:
+
+       amplitude = 10 ^ (dB / 20)          (dB is 0 or negative)
+
+   With the system volume at maximum, amplitude 1.0 is the loudest your
+   headphones can play, so the numbers below are relative, not
+   calibrated sound-pressure or hearing levels.
+   =================================================================== */
+const MIN_DB  = -90;   // quietest selectable level
+const MAX_DB  = 0;     // loudest selectable level (full scale; never exceed this)
+const STEP_DB = 2.5;    // size of each button press
+const START_DB = -80;  // begin very quietly
+
+/** Convert a level in dBFS to a linear amplitude between 0 and 1. */
+function dbToAmplitude(db) {
+  return Math.pow(10, db / 20);
+}
+
+/** Keep a dB value inside the allowed range. */
+function clampDb(db) {
+  return Math.min(MAX_DB, Math.max(MIN_DB, db));
+}
+
+/* ===================================================================
+   AUDIO
+   =================================================================== */
+const PULSE_SECONDS = 1.0;   // tone length
+const RAMP_SECONDS  = 0.03;  // fade in/out so the tone does not click
+let audioCtx = null;
+
+function playPulse(frequencyHz, ear, db) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+
+  const amplitude = dbToAmplitude(db);
+  const now = audioCtx.currentTime;
+  const end = now + PULSE_SECONDS;
+
+  const osc = audioCtx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.value = frequencyHz;
+
+  // Gain node sets the loudness; it fades up, holds, then fades down.
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(amplitude, now + RAMP_SECONDS);
+  gain.gain.setValueAtTime(amplitude, end - RAMP_SECONDS);
+  gain.gain.linearRampToValueAtTime(0, end);
+
+  // Channel merger sends the mono tone to ONE channel only (0 = left, 1 = right),
+  // leaving the other ear completely silent.
+  const merger = audioCtx.createChannelMerger(2);
+  const channel = ear === "left" ? 0 : 1;
+  osc.connect(gain);
+  gain.connect(merger, 0, channel);
+  merger.connect(audioCtx.destination);
+
+  osc.start(now);
+  osc.stop(end);
+  return new Promise(resolve => { osc.onended = resolve; });
+}
+
+/* ===================================================================
+   USER INTERFACE
+   =================================================================== */
+let levelDb = START_DB;
+const $ = id => document.getElementById(id);
+
+function currentEar() {
+  return document.querySelector('input[name="ear"]:checked').value;
+}
+
+function render() {
+  $("db").textContent = levelDb + " dB";
+  $("gain").textContent = "amplitude " + dbToAmplitude(levelDb).toPrecision(3) + " of full scale";
+  $("tester").dataset.ear = currentEar();
+  $("down").disabled = levelDb <= MIN_DB;
+  $("up").disabled   = levelDb >= MAX_DB;
+}
+
+$("down").onclick = () => stepLevel(-STEP_DB);
+$("up").onclick   = () => stepLevel(+STEP_DB);
+document.querySelectorAll('input[name="ear"]').forEach(r => r.onchange = render);
+
+function stepLevel(deltaDb) { levelDb = clampDb(levelDb + deltaDb); render(); }
+
+async function pressPlay() {
+  const button = $("play");
+  if (button.disabled) return;
+  button.disabled = true;
+  $("playLabel").textContent = "Playing…";
+  await playPulse(Number($("freq").value), currentEar(), levelDb);
+  button.disabled = false;
+  $("playLabel").textContent = "Play pulse";
+}
+$("play").onclick = pressPlay;
+
+function stepFrequency(direction) {
+  const select = $("freq");
+  const next = select.selectedIndex + direction;
+  if (next >= 0 && next < select.options.length) select.selectedIndex = next;
+}
+
+function chooseEar(ear) {
+  document.getElementById(ear === "left" ? "earL" : "earR").checked = true;
+  render();
+}
+
+/* ===================================================================
+   KEYBOARD SHORTCUTS
+     Space = play pulse      Up / Down = level +2.5 / -2.5 dB
+     L / R = left / right    Left / Right arrows = previous / next frequency
+   =================================================================== */
+const SHORTCUTS = {
+  " ":          pressPlay,
+  "ArrowUp":    () => stepLevel(+STEP_DB),
+  "ArrowDown":  () => stepLevel(-STEP_DB),
+  "ArrowLeft":  () => stepFrequency(-1),
+  "ArrowRight": () => stepFrequency(+1),
+  "l":          () => chooseEar("left"),
+  "r":          () => chooseEar("right"),
+};
+
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;      // leave browser shortcuts alone
+  const action = SHORTCUTS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+  if (!action) return;
+  e.preventDefault();                                  // stop focused controls reacting twice
+  if (!e.repeat) action();                             // holding Space must not replay the tone
+});
+// Firefox fires a button click on Space key-up, so cancel that too.
+document.addEventListener("keyup", e => { if (e.key === " ") e.preventDefault(); });
+
+render();
+</script>
+</body>
+</html>
