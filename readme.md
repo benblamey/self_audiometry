@@ -1,1 +1,1 @@
-Simple tool for longitudinal home monitoring of hearing loss. It is not a replacement for clinical audiometry and is not intended for clinical use.
+Simple tool for longitudinal home monitoring of hearing levels. It is not a replacement for clinical audiometry and is not intended for clinical use.
